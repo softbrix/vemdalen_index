@@ -1,0 +1,36 @@
+{
+  "name": "vemdalen_index",
+  "version": "1.0.0",
+  "description": "A simple index which will be persisted in redis",
+  "main": "index.js",
+  "scripts": {
+    "start-redis": "redis-server &",
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/softbrix/vemdalen_index.git"
+  },
+  "keywords": [
+    "node",
+    "index",
+    "javascript",
+    "persisted",
+    "in",
+    "memory",
+    "string",
+    "redis"
+  ],
+  "author": "Andreas Sehr",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/softbrix/vemdalen_index/issues"
+  },
+  "homepage": "https://github.com/softbrix/vemdalen_index#readme",
+  "dependencies": {
+    "redis": "2.8.0"
+  },
+  "devDependencies": {
+    "mocha": "3.2.0"
+  }
+}

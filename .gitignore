@@ -1,0 +1,5 @@
+node_modules
+test/data
+test/data_big
+test/vx_data
+dump.rdb

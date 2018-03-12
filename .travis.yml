@@ -1,0 +1,17 @@
+language: node_js
+services:
+  - redis-server
+node_js:
+  - node
+install:
+  - npm install
+script:
+  - npm test
+deploy:
+  provider: npm
+  email: andreas@softbrix.se
+  api_key:
+    secure: NRtpwAQM36qWP4tY5/GnlqcCPheNCyilA+JwQ+7vpLj7u3JOoxBZvJcWx+d6bq68+b7Be7lmPdt8y7KHy6Qy73rCwXrOWzc7Q0ytcB8iy6KKfA34DwSfcDlEhpWaYVx6fTXI+jtTcD+mHx6rlappzQrfidxX+wNl5qCRt/h9WmdrnXRCFVYxXNIw1k4zhD8nm+6QQ0aSjDuxP2rey3sWoawtSZOKcwnCu7CHrRIYEGWtmyI951s3b+LlzSCKJuf82LQGdSyfK1yHGTF9ItZROTjSwFtFqsNVXCX1MxmuB1a5vtquBlg70lEEMbDXh0dzh+YeO3gkYiyq+qBPDWzumzauNcBEl2fyHMj5jq33ePAZOMJWiZD/VzVxa5gRMTsjml85jCKaaz/gmIhYI/XywN5H6SuiLOxwgF964WKZnT7UWcAuQfyOxyo0IzB/nfdL68sxZJZn9duoDlwq4gr3+T8uNUxzTYhvKoJhIHceJDiKr101bKBfTXhrL5RVjzAAT4xrQKR8iAVClsI9TSNFrhPihOfsdW+YyCd9fU0SCGsihpXkpsQwlZOhjdx9G41lj4R3mXgQjxvfjcAWW/CpQYMngZ2/g1pu9jelCpbFewsjfaUYR0kAyyotP7Lw25iNWHHhYaFMzelfc08fbPEEkG43+rMSLbr48VwMwZ1cwfc=
+  on:
+    tags: true
+    repo: softbrix/vemdalen_index
