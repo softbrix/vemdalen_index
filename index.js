@@ -28,8 +28,8 @@ function isString(str) {
 
 module.exports = function(namespace, config) {
   config = config || {};
-  config.redisHost = config.redisHost || 'localhost';
-  config.redisPort = config.redisPort || 6769;
+  config.host = config.host || 'localhost';
+  config.port = config.port || 6379;
 
   const _indexType = getIndexType(config.indexType);
   let _namespace = namespace.endsWith(':') ? namespace : namespace + ':';
@@ -54,7 +54,7 @@ module.exports = function(namespace, config) {
     clear: function() {
       let deleteFunc = this.delete;
       return this.keys().then(function(keys) {
-        var promises = keys.map(key => deleteFunc(key.substring(_namespace.length)));
+        var promises = keys.map(key => deleteFunc(key));
         return Promise.all(promises);
       });
     },
@@ -101,20 +101,19 @@ module.exports = function(namespace, config) {
       }
       return new Promise(function(resolve, reject) {
         var callback = callbackFactory(resolve, reject);
-        var callbackHandler = function(err, res) {
-          // Prevent returning null, empty array means the same
-          if(res === null) {
-            res = [];
-          }
-          callback(err, res);
-        };
 
         if(_indexType === OBJECT_INDEX) {
-          redisClient.hgetall(key, callbackHandler);
+          redisClient.hgetall(key, callback);
         } else if(_indexType === STRING_INDEX) {
-          redisClient.get(key, callbackHandler);
+          redisClient.get(key, callback);
         } else if(_indexType === STRING_ARRAY_INDEX) {
-          redisClient.lrange(key, 0, -1, callbackHandler);
+          redisClient.lrange(key, 0, -1, function(err, res) {
+            // Prevent returning null, empty array means the same
+            if(res === null) {
+              res = [];
+            }
+            callback(err, res);
+          });
         }
       });
     },
@@ -161,7 +160,9 @@ module.exports = function(namespace, config) {
       return new Promise(function(resolve, reject) {
         var callbackHandler = callbackFactory(resolve, reject);
         redisClient.keys(_namespace + '*', callbackHandler);
-      });
+      })
+      // Remove namespace from the returned keys
+      .then(keys => keys.map(key => key.substring(_namespace.length)));
     },
 
     /** Return the number of keys in the index */

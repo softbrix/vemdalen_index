@@ -13,29 +13,29 @@ function times(count, func) {
   }
 }
 
-describe('Shatabang Index', function() {
+describe('Shatabang Index', () => {
   // Connects to the default instance
   const idx = shIndex(INDEX_NAMESPACE,{});
 
-  it('should start empty', function() {
+  it('should start empty', () => {
     return idx.clear().then(function() {
       return idx.size().then((sz) => assert.equal(0, sz));
     });
   });
 
-  it('get should return empty array for unknown key', function() {
+  it('get should return empty array for unknown key', () => {
     return idx.get('aaa').then(val => assert.deepEqual([], val));
   });
 
-  it('search should return empty array for unknown key', function() {
+  it('search should return empty array for unknown key', () => {
     return idx.search('aaa').then(val => assert.deepEqual([], val));
   });
 
-  it('get should reject if key is not string', function() {
+  it('get should reject if key is not string', () => {
     return idx.get(12).then(assert.fail, assert.ok);
   });
 
-  it('put should reject if key is not string', function() {
+  it('put should reject if key is not string', () => {
     return idx.put(12, 'Ignore').then(assert.fail, assert.ok);
   });
 
@@ -132,7 +132,7 @@ describe('Shatabang Index', function() {
   });
 
 
-  it('should be able to reopen index and add new items', function() {
+  it('should be able to reopen index and add new items', () => {
     const KEY1 = 'asaklint';
     const VAL1 = 'the beste no ';
     const ITERATIONS = 10;
@@ -147,44 +147,47 @@ describe('Shatabang Index', function() {
     });
   });
 
-  it('should handle put plenty items in single file', () => {
-    var k = "D5320";
-    const noOfItems = 10000;
-    const tasks = [];
-    times(noOfItems, function(n) {
-      var v = (Math.random() * 10e20).toString(36);
-      tasks.push(idx.put(k, v));
-    });
-    return Promise.all(tasks).then(() => {
-      return idx.get(k)
-      .then(res => assert.equal(noOfItems, res.length))
-      .then(() => idx.search(k))
-      .then(res => assert.equal(1, res.length));
-    });
-  });
+  describe('performance tests', () => {
 
-  it('should distribute random data with multiple values on same key', () => {
-    var noOfItems = 50;
-    let PREV_KEY_LENGTH = 0;
-    const tasks = [idx.size().then(res => PREV_KEY_LENGTH = res)];
-
-    /* Fill with garbage **/
-    times(noOfItems, function(n) {
-      var k = (Math.random() * 10e20).toString(36).substring(0,random(2, 20));
-      k += new Date().getTime();
-
-      times(200, function(n) {
+    it('should handle put plenty items in single file', () => {
+      var k = "D5320";
+      const noOfItems = 10000;
+      const tasks = [];
+      times(noOfItems, function(n) {
         var v = (Math.random() * 10e20).toString(36);
         tasks.push(idx.put(k, v));
       });
+      return Promise.all(tasks).then(() => {
+        return idx.get(k)
+        .then(res => assert.equal(noOfItems, res.length))
+        .then(() => idx.search(k))
+        .then(res => assert.equal(1, res.length));
+      });
     });
 
-    return Promise.all(tasks).then(() => {
-      return idx.size().then(res => assert.equal(PREV_KEY_LENGTH + noOfItems, res));
+    it('should distribute random data with multiple values on same key', () => {
+      var noOfItems = 50;
+      let PREV_KEY_LENGTH = 0;
+      const tasks = [idx.size().then(res => PREV_KEY_LENGTH = res)];
+
+      /* Fill with garbage **/
+      times(noOfItems, function(n) {
+        var k = (Math.random() * 10e20).toString(36).substring(0,random(2, 20));
+        k += new Date().getTime();
+
+        times(200, function(n) {
+          var v = (Math.random() * 10e20).toString(36);
+          tasks.push(idx.put(k, v));
+        });
+      });
+
+      return Promise.all(tasks).then(() => {
+        return idx.size().then(res => assert.equal(PREV_KEY_LENGTH + noOfItems, res));
+      });
     });
   });
 
-  describe('simultaneous read and write', function() {
+  describe('simultaneous read and write', () => {
     const idx2 = shIndex(INDEX_NAMESPACE);
 
     it('should be able to sync data between instances in same process', () => {
@@ -202,6 +205,25 @@ describe('Shatabang Index', function() {
       .then(res => assert.deepEqual([VALUE], res))
       .then(() => idx2.get(KEY))
       .then(res => assert.deepEqual([VALUE], res));
+    });
+  });
+
+  describe('object storage test', () => {
+    const OBJECT_INDEX_NAMESPACE = 'index_unit_test_objects';
+    const objIndex = shIndex(OBJECT_INDEX_NAMESPACE, {indexType: 'object'});
+    var objs = [{a:1, b:2}, {c:3, d:4}, {e: 5, f: 6}];
+
+    it('should be able to store objects', () => {
+      var key = 123456789;
+      return Promise.all(objs.map(obj => objIndex.put('' + (key++), obj)));
+    });
+
+    it('should be able to list objects', () => {
+      objIndex.keys().then((keys) => {
+        var promises = keys.map(key => objIndex.get(key));
+        return Promise.all(promises).then(values => assert.equal(3, values.length));
+      })
+      .catch(assert.fail);
     });
   });
 });
