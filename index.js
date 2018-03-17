@@ -67,9 +67,6 @@ module.exports = function(namespace, config) {
       if(!isString(key) || key.length === 0) {
         return Promise.reject('Key must be an non empty string');
       }
-      if(key.indexOf(':') >= 0) {
-        return Promise.reject('Key must not include a ":" (colon). Use new index namespace instead');
-      }
       if(value === undefined) {
         return Promise.reject('Value must not be undefined');
       }

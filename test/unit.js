@@ -79,17 +79,17 @@ describe('Shatabang Index', () => {
   });
 
   it('should handle put with complex key', () => {
-    const KEY = '*$HDv>J7{$}s&N*+Gm=sZ@+9E!WL)!ZhT)?SofkHM^{YKE&FTADDFRErY%YDvfprAd-)[DWp6/u$9+@zFJ%1xLq{gBz+/cx(4D]H<ixour7fiuT[.AHJcZgurQAf';
+    const KEY = '*$HDv>J7{$}s&N*+Gm=sZ@+9E!WL):!ZhT)?SofkHM^{YKE&FTADDFRErY%YDvfprAd-)[DWp6/u$9+@zFJ%1xLq{gBz+/cx(4D]H<ixour7fiuT[.AHJcZgurQAf';
     const VAL1 = 'val1';
     return idx.put(KEY, VAL1).then(function() {
       return idx.get(KEY).then(res => assert.deepEqual([VAL1], res));
     });
   });
 
-  it('should not allow colon in the key', () => {
+  it('should allow colon in the key', () => {
     const KEY = 'abc:def';
     const VAL1 = 'val1';
-    return idx.put(KEY, VAL1).then(assert.fail, assert.ok);
+    return idx.put(KEY, VAL1).then(assert.ok, assert.fail);
   });
 
   it('should handle delete by valid key', () => {
