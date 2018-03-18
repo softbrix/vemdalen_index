@@ -1,5 +1,6 @@
 var assert = require('assert');
 var shIndex = require('../index.js');
+var fakeRedis = require("fakeredis");
 
 const INDEX_NAMESPACE = 'index_unit_test';
 
@@ -12,6 +13,20 @@ function times(count, func) {
     func();
   }
 }
+
+describe('Shatabang Mocked Index', () => {
+  const idx = shIndex(INDEX_NAMESPACE,{client: fakeRedis.createClient()});
+
+  it('should handle put in different keys', () => {
+    var tasks = [
+      idx.put('as', 'the beste1'),
+      idx.put('asa', 'the beste2'),
+      idx.put('asas', 'the beste3'),
+      idx.put('asasas', 'the beste4')];
+
+    return Promise.all(tasks);
+  });
+});
 
 describe('Shatabang Index', () => {
   // Connects to the default instance

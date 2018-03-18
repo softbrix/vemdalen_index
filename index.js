@@ -27,15 +27,16 @@ function isString(str) {
 }
 
 module.exports = function(namespace, config) {
+  namespace = namespace || '';
   config = config || {};
   config.host = config.host || 'localhost';
   config.port = config.port || 6379;
 
   const _indexType = getIndexType(config.indexType);
-  let _namespace = namespace.endsWith(':') ? namespace : namespace + ':';
-  config.prefix = _namespace;
+  namespace = namespace.endsWith(':') ? namespace : namespace + ':';
+  config.prefix = namespace;
 
-  let redisClient = redis.createClient(config);
+  let redisClient = config.client !== undefined ? config.client : redis.createClient(config);
 
   function callbackFactory(resolve, reject) {
     return function(err, res) {
@@ -146,7 +147,7 @@ module.exports = function(namespace, config) {
       return new Promise(function(resolve, reject) {
         var callbackHandler = callbackFactory(resolve, reject);
 
-        redisClient.keys(_namespace + searchStr + '*', callbackHandler);
+        redisClient.keys(namespace + searchStr + '*', callbackHandler);
       });
     },
 
@@ -156,10 +157,10 @@ module.exports = function(namespace, config) {
     keys : function() {
       return new Promise(function(resolve, reject) {
         var callbackHandler = callbackFactory(resolve, reject);
-        redisClient.keys(_namespace + '*', callbackHandler);
+        redisClient.keys(namespace + '*', callbackHandler);
       })
       // Remove namespace from the returned keys
-      .then(keys => keys.map(key => key.substring(_namespace.length)));
+      .then(keys => keys.map(key => key.substring(namespace.length)));
     },
 
     /** Return the number of keys in the index */

@@ -14,7 +14,19 @@ Create the index instance by simply requiring the module and create a
 new instance of the object. The instance creation will take a namespace and
 connection configuration as arguments.
 
-Then you can use the put, get and search methods to modify the index.
+You can supply your own redis client by setting the client config parameter.
+
+After the index instance has been created you can use the put, get and search methods to modify the index.
+
+## Configuration
+- client: Set this value if you want to use your own redisClient
+- host (localhost): If client not set, then a new client will connect to this host
+- port (6379): If client not set, then a new client will connect to this port
+- namespace (): This will be the prefix for the indexed items in the redis data store
+- indexType ('strings'): The type if the values to store in the index
+  - strings: List of string on a single key
+  - string: One string value per key, a set will replace the current value
+  - object: One object value per key, the object must be a single level hierarchy
 
 ## Method description
 - clear(): This method will clear all keys and values in the index.
@@ -32,8 +44,6 @@ to call get for each and every of them.
 
 ## External dependencies
 Nothing else than the Redis data store and the npm redis client.
-
-
 
 ## Why Vemdalen?
 Vemdalen is a small and family friendly ski resort in the middle of Sweden. In
