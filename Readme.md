@@ -24,8 +24,10 @@ After the index instance has been created you can use the put, get and search me
 - port (6379): If client not set, then a new client will connect to this port
 - namespace (): This will be the prefix for the indexed items in the redis data store
 - indexType ('strings'): The type if the values to store in the index
-  - strings: List of string on a single key
-  - string: One string value per key, a set will replace the current value
+  - strings: List of string on a single key, can have duplicate values
+  - strings_unique: List of unique strings on a single key, This will slow down
+      the put operation since it has to load the values for the key to match with the new value.
+  - string: One string value per key, a set operation will replace the current value
   - object: One object value per key, the object must be a single level hierarchy
 
 ## Method description

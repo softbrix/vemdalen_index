@@ -9,11 +9,14 @@ var redis = require("redis");
 
 const STRING_INDEX = 0;
 const STRING_ARRAY_INDEX = 1;
-const OBJECT_INDEX = 2
+const STRING_UNIQUE_ARRAY_INDEX = 2;
+const OBJECT_INDEX = 3;
 
 function getIndexType(typeString) {
   if(typeString === undefined || typeString === 'strings') {
     return STRING_ARRAY_INDEX;
+  } else if(typeString === 'strings_unique') {
+    return STRING_UNIQUE_ARRAY_INDEX;
   } else if(typeString === 'string') {
     return STRING_INDEX;
   } else if(typeString === 'object') {
@@ -71,6 +74,7 @@ module.exports = function(namespace, config) {
       if(value === undefined) {
         return Promise.reject('Value must not be undefined');
       }
+      let that = this;
 
       return new Promise(function(resolve, reject) {
         var callbackHandler = callbackFactory(resolve, reject);
@@ -81,10 +85,25 @@ module.exports = function(namespace, config) {
           if(!isString(value)) {
             return reject('Value must be a string when storing strings');
           }
-          if(_indexType === STRING_INDEX) {
-            redisClient.set(key, value, callbackHandler);
-          } else if(_indexType === STRING_ARRAY_INDEX) {
-            redisClient.lpush(key, value, callbackHandler);
+          let putStringValue = () => {
+            if(_indexType === STRING_INDEX) {
+              redisClient.set(key, value, callbackHandler);
+            } else if(_indexType === STRING_ARRAY_INDEX || _indexType === STRING_UNIQUE_ARRAY_INDEX) {
+              redisClient.lpush(key, value, callbackHandler);
+            }
+          };
+
+          if(_indexType === STRING_UNIQUE_ARRAY_INDEX) {
+            // We need to check if the value already exists
+            that.get(key).then(values => {
+              if(values.indexOf(value) < 0) {
+                return putStringValue();
+              } else {
+                callbackHandler();
+              }
+            });
+          } else {
+            putStringValue();
           }
         }
       });
@@ -104,7 +123,7 @@ module.exports = function(namespace, config) {
           redisClient.hgetall(key, callback);
         } else if(_indexType === STRING_INDEX) {
           redisClient.get(key, callback);
-        } else if(_indexType === STRING_ARRAY_INDEX) {
+        } else if(_indexType === STRING_ARRAY_INDEX || _indexType === STRING_UNIQUE_ARRAY_INDEX) {
           redisClient.lrange(key, 0, -1, function(err, res) {
             // Prevent returning null, empty array means the same
             if(res === null) {

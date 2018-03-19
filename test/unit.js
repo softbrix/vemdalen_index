@@ -162,6 +162,31 @@ describe('Shatabang Index', () => {
     });
   });
 
+  describe('string unique', () => {
+    const idx = shIndex(INDEX_NAMESPACE + '_unique',{ indexType: 'strings_unique'});
+
+    it('should start empty', () => {
+      return idx.clear().then(function() {
+        return idx.size().then((sz) => assert.equal(0, sz));
+      });
+    });
+
+    it('should filter put multiple times', () => {
+      const KEY = 'asaba';
+      const VALUE = 'ABC';
+      const NEW_VALUE = 'ABC123';
+      return idx.put(KEY, VALUE)
+      .then(() => idx.put(KEY, VALUE))
+
+      .then(() => idx.get(KEY))
+      .then(res => assert.deepEqual([VALUE], res))
+
+      .then(() => idx.put(KEY, NEW_VALUE))
+      .then(() => idx.get(KEY))
+      .then(res => assert.deepEqual([ NEW_VALUE, VALUE], res))
+    });
+  });
+
   describe('performance tests', () => {
 
     it('should handle put plenty items in single file', () => {
