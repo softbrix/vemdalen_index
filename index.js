@@ -106,7 +106,7 @@ module.exports = function(namespace, config) {
               } else {
                 callbackHandler();
               }
-            });
+            }, reject);
           } else {
             putStringValue();
           }
@@ -194,6 +194,9 @@ module.exports = function(namespace, config) {
     /** Return the number of keys in the index */
     size : function() {
       return this.keys().then(keys => keys.length);
-    }
+    },
+
+    /** Close the redis connection **/
+    quit : redisClient.quit
   };
 };

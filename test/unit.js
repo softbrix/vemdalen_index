@@ -14,8 +14,9 @@ function times(count, func) {
   }
 }
 
-xdescribe('Shatabang Mocked Index', () => {
-  const idx = shIndex(INDEX_NAMESPACE,{client: fakeRedis.createClient()});
+describe('Shatabang Mocked Index', () => {
+  let redisClient = fakeRedis.createClient();
+  const idx = shIndex(INDEX_NAMESPACE,{client: redisClient});
 
   it('should handle put in different keys', () => {
     var tasks = [
@@ -26,8 +27,16 @@ xdescribe('Shatabang Mocked Index', () => {
 
     return Promise.all(tasks);
   });
+
+  it('should handle quit', () => {
+    return idx.put('asb', 'the beste1')
+      .then(() => redisClient.quit())
+      .then(() => idx.get('asb'))
+      .then(assert.fail, assert.ok );
+  });
 });
 
+/** Enable this if you want to clear the entire redis database */
 xdescribe('Shatabang clear database', () => {
   const idx = shIndex();
 
@@ -194,6 +203,13 @@ describe('Shatabang Index', () => {
       .then(() => idx.put(KEY, NEW_VALUE))
       .then(() => idx.get(KEY))
       .then(res => assert.deepEqual([ NEW_VALUE, VALUE], res))
+    });
+
+    it('should handle quit', () => {
+      return idx.put('asb', 'the beste1')
+        .then(() => idx.quit())
+        .then(() => idx.get('asb'))
+        .then(assert.fail, assert.ok);
     });
   });
 
