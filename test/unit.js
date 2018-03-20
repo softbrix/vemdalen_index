@@ -14,7 +14,7 @@ function times(count, func) {
   }
 }
 
-describe('Shatabang Mocked Index', () => {
+xdescribe('Shatabang Mocked Index', () => {
   const idx = shIndex(INDEX_NAMESPACE,{client: fakeRedis.createClient()});
 
   it('should handle put in different keys', () => {
@@ -27,6 +27,16 @@ describe('Shatabang Mocked Index', () => {
     return Promise.all(tasks);
   });
 });
+
+xdescribe('Shatabang clear database', () => {
+  const idx = shIndex();
+
+  it('should start empty', () => {
+    return idx.clear().then(function() {
+      return idx.size().then((sz) => assert.equal(0, sz));
+    });
+  });
+})
 
 describe('Shatabang Index', () => {
   // Connects to the default instance

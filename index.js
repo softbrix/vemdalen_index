@@ -36,10 +36,13 @@ module.exports = function(namespace, config) {
   config.port = config.port || 6379;
 
   const _indexType = getIndexType(config.indexType);
-  namespace = namespace.endsWith(':') ? namespace : namespace + ':';
-  config.prefix = namespace;
-
-  let redisClient = config.client !== undefined ? config.client : redis.createClient(config);
+  namespace = namespace === '' || namespace.endsWith(':') ? namespace : namespace + ':';
+  let redisClient;
+  if(config.client) {
+    redisClient = config.client;
+  } else {
+    redisClient = redis.createClient(config);
+  }
 
   function callbackFactory(resolve, reject) {
     return function(err, res) {
@@ -80,12 +83,14 @@ module.exports = function(namespace, config) {
         var callbackHandler = callbackFactory(resolve, reject);
 
         if(_indexType === OBJECT_INDEX) {
+          key = namespace + key;
           redisClient.hmset(key, value, callbackHandler);
         } else {
           if(!isString(value)) {
             return reject('Value must be a string when storing strings');
           }
           let putStringValue = () => {
+            key = namespace + key;
             if(_indexType === STRING_INDEX) {
               redisClient.set(key, value, callbackHandler);
             } else if(_indexType === STRING_ARRAY_INDEX || _indexType === STRING_UNIQUE_ARRAY_INDEX) {
@@ -116,6 +121,8 @@ module.exports = function(namespace, config) {
       if(!isString(key) || key.length === 0) {
         return Promise.reject("Key must be an non empty string");
       }
+      key = namespace + key;
+
       return new Promise(function(resolve, reject) {
         var callback = callbackFactory(resolve, reject);
 
@@ -140,6 +147,8 @@ module.exports = function(namespace, config) {
       if(!isString(key) || key.length === 0) {
         return Promise.reject("Key must be an non empty string");
       }
+      key = namespace + key;
+
       return new Promise(function(resolve, reject) {
         var callbackHandler = callbackFactory(resolve, reject);
         if(_indexType === OBJECT_INDEX) {
