@@ -197,6 +197,8 @@ module.exports = function(namespace, config) {
     },
 
     /** Close the redis connection **/
-    quit : redisClient.quit
+    quit : function() {
+      redisClient.quit()
+    }
   };
 };
