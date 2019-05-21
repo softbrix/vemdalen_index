@@ -51,6 +51,11 @@ describe('Shatabang Index', () => {
   // Connects to the default instance
   const idx = shIndex(INDEX_NAMESPACE,{});
 
+  after(done => {
+    idx.quit();
+    done();
+  });
+  
   it('should start empty', () => {
     return idx.clear().then(function() {
       return idx.size().then((sz) => assert.equal(0, sz));
@@ -174,16 +179,22 @@ describe('Shatabang Index', () => {
     for(var i = 0; i < ITERATIONS; ++i) {
       var tmpIdx = shIndex(INDEX_NAMESPACE);
       tasks.push(tmpIdx.put(KEY1, VAL1+i));
+      tmpIdx.quit();
     }
     return Promise.all(tasks).then(() => {
       var tmpIdx = shIndex(INDEX_NAMESPACE);
-      return tmpIdx.get(KEY1).then(res => assert.equal(ITERATIONS, res.length));
+      return tmpIdx.get(KEY1).then(res => assert.equal(ITERATIONS, res.length)).finally(tmpIdx.quit);
     });
   });
 
   describe('string unique', () => {
     const idx = shIndex(INDEX_NAMESPACE + '_unique',{ indexType: 'strings_unique'});
 
+    after(done => {
+      idx.quit();
+      done();
+    });
+    
     it('should start empty', () => {
       return idx.clear().then(function() {
         return idx.size().then((sz) => assert.equal(0, sz));
@@ -256,6 +267,11 @@ describe('Shatabang Index', () => {
   describe('simultaneous read and write', () => {
     const idx2 = shIndex(INDEX_NAMESPACE);
 
+    after(done => {
+      idx2.quit();
+      done();
+    });
+    
     it('should be able to sync data between instances in same process', () => {
       const KEY = 'Netflix';
       const VALUE = 'The Crown';
@@ -278,6 +294,11 @@ describe('Shatabang Index', () => {
     const OBJECT_INDEX_NAMESPACE = 'index_unit_test_objects';
     const objIndex = shIndex(OBJECT_INDEX_NAMESPACE, {indexType: 'object'});
     var objs = [{a:1, b:2}, {c:3, d:4}, {e: 5, f: 6}];
+    
+    after(done => {
+      objIndex.quit();
+      done();
+    });
 
     it('should be able to store objects', () => {
       var key = 123456789;
