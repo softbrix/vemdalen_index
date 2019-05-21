@@ -18,6 +18,11 @@ describe('Shatabang Mocked Index', () => {
   let redisClient = fakeRedis.createClient();
   const idx = shIndex(INDEX_NAMESPACE,{client: redisClient});
 
+  after(done => {
+    idx.quit();
+    done();
+  });
+
   it('should handle put in different keys', () => {
     var tasks = [
       idx.put('as', 'the beste1'),
