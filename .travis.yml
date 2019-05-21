@@ -6,7 +6,7 @@ node_js:
 install:
 - npm install
 script:
-- npm test
+- npm test --exit
 deploy:
   provider: npm
   email: andreas@softbrix.se
