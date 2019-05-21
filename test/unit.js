@@ -187,7 +187,7 @@ describe('Shatabang Index', () => {
     });
   });
 
-  describe('string unique', () => {
+  xdescribe('string unique', () => {
     const idx = shIndex(INDEX_NAMESPACE + '_unique',{ indexType: 'strings_unique'});
 
     after(done => {
@@ -224,7 +224,7 @@ describe('Shatabang Index', () => {
     });
   });
 
-  describe('performance tests', () => {
+  xdescribe('performance tests', () => {
 
     it('should handle put plenty items in single file', () => {
       var k = "D5320";
@@ -264,7 +264,7 @@ describe('Shatabang Index', () => {
     });
   });
 
-  describe('simultaneous read and write', () => {
+  xdescribe('simultaneous read and write', () => {
     const idx2 = shIndex(INDEX_NAMESPACE);
 
     after(done => {
@@ -290,7 +290,7 @@ describe('Shatabang Index', () => {
     });
   });
 
-  describe('object storage test', () => {
+  xdescribe('object storage test', () => {
     const OBJECT_INDEX_NAMESPACE = 'index_unit_test_objects';
     const objIndex = shIndex(OBJECT_INDEX_NAMESPACE, {indexType: 'object'});
     var objs = [{a:1, b:2}, {c:3, d:4}, {e: 5, f: 6}];
