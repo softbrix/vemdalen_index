@@ -40,7 +40,7 @@ describe('Shatabang Mocked Index', () => {
 xdescribe('Shatabang clear database', () => {
   const idx = shIndex();
 
-  it('should start empty', () => {
+  xit('should start empty', () => {
     return idx.clear().then(function() {
       return idx.size().then((sz) => assert.equal(0, sz));
     });
