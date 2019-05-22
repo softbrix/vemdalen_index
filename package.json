@@ -1,6 +1,6 @@
 {
   "name": "vemdalen_index",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "A simple index which will be persisted in redis",
   "main": "index.js",
   "scripts": {
