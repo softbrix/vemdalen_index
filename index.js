@@ -72,10 +72,10 @@ module.exports = function(namespace, config) {
     */
     put : function(key, value) {
       if(!isString(key) || key.length === 0) {
-        return Promise.reject('Key must be an non empty string');
+        return Promise.reject('Key must be an non empty string: ' + key);
       }
       if(value === undefined) {
-        return Promise.reject('Value must not be undefined');
+        return Promise.reject('Value must not be undefined: ' + value);
       }
       let that = this;
 
@@ -87,7 +87,7 @@ module.exports = function(namespace, config) {
           redisClient.hmset(key, value, callbackHandler);
         } else {
           if(!isString(value)) {
-            return reject('Value must be a string when storing strings');
+            return reject('Value must be a string when storing strings: ' + value);
           }
           let putStringValue = () => {
             key = namespace + key;
@@ -119,7 +119,7 @@ module.exports = function(namespace, config) {
      */
     get : function(key) {
       if(!isString(key) || key.length === 0) {
-        return Promise.reject("Key must be an non empty string");
+        return Promise.reject("Key must be an non empty string: " + key);
       }
       key = namespace + key;
 
@@ -145,7 +145,7 @@ module.exports = function(namespace, config) {
     /* Delete a key */
     delete: function(key) {
       if(!isString(key) || key.length === 0) {
-        return Promise.reject("Key must be an non empty string");
+        return Promise.reject("Key must be an non empty string: " + key);
       }
       key = namespace + key;
 

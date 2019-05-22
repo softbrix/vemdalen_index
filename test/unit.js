@@ -217,7 +217,7 @@ describe('Shatabang Index', () => {
 
     it('should handle put plenty items in single file', () => {
       var k = "D5320";
-      const noOfItems = 10000;
+      const noOfItems = 1000;
       const tasks = [];
       times(noOfItems, function(n) {
         var v = (Math.random() * 10e20).toString(36);
@@ -241,7 +241,7 @@ describe('Shatabang Index', () => {
         var k = (Math.random() * 10e20).toString(36).substring(0,random(2, 20));
         k += new Date().getTime();
 
-        times(200, function(n) {
+        times(20, function(n) {
           var v = (Math.random() * 10e20).toString(36);
           tasks.push(idx.put(k, v));
         });
@@ -273,23 +273,23 @@ describe('Shatabang Index', () => {
       .then(res => assert.deepEqual([VALUE], res));
     });
   });
+});
 
-  describe('object storage test', () => {
-    const OBJECT_INDEX_NAMESPACE = 'index_unit_test_objects';
-    const objIndex = shIndex(OBJECT_INDEX_NAMESPACE, {indexType: 'object'});
-    var objs = [{a:1, b:2}, {c:3, d:4}, {e: 5, f: 6}];
+describe('Shatabang Object storage', () => {
+  const OBJECT_INDEX_NAMESPACE = 'index_unit_test_objects';
+  const objIndex = shIndex(OBJECT_INDEX_NAMESPACE, {indexType: 'object'});
+  var objs = [{a:1, b:2}, {c:3, d:4}, {e: 5, f: 6}];
 
-    it('should be able to store objects', () => {
-      var key = 123456789;
-      return Promise.all(objs.map(obj => objIndex.put('' + (key++), obj)));
-    });
+  it('should be able to store objects', () => {
+    var key = 123456789;
+    return Promise.all(objs.map(obj => objIndex.put('' + (key++), obj)));
+  });
 
-    it('should be able to list objects', () => {
-      objIndex.keys().then((keys) => {
-        var promises = keys.map(key => objIndex.get(key));
-        return Promise.all(promises).then(values => assert.equal(3, values.length));
-      })
-      .catch(assert.fail);
-    });
+  it('should be able to list objects', () => {
+    objIndex.keys().then((keys) => {
+      var promises = keys.map(key => objIndex.get(key));
+      return Promise.all(promises).then(values => assert.equal(3, values.length));
+    })
+    .catch(assert.fail);
   });
 });
