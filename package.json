@@ -32,6 +32,6 @@
   },
   "devDependencies": {
     "redis-mock": "0.56.3",
-    "mocha": "6.1.4"
+    "mocha": "8.2.1"
   }
 }
