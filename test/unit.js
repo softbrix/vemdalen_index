@@ -1,6 +1,6 @@
 var assert = require('assert');
 var shIndex = require('../index.js');
-var fakeRedis = require("fakeredis");
+var fakeRedis = require("redis-mock");
 
 const INDEX_NAMESPACE = 'index_unit_test';
 
@@ -28,7 +28,7 @@ describe('Shatabang Mocked Index', () => {
     return Promise.all(tasks);
   });
 
-  it('should handle quit', () => {
+  xit('should handle quit', () => {
     return idx.put('asb', 'the beste1')
       .then(() => redisClient.quit())
       .then(() => idx.get('asb'))
@@ -37,10 +37,10 @@ describe('Shatabang Mocked Index', () => {
 });
 
 /** Enable this if you want to clear the entire redis database */
-xdescribe('Shatabang clear database', () => {
+describe('Shatabang clear database', () => {
   const idx = shIndex();
 
-  xit('should start empty', () => {
+  it('should start empty', () => {
     return idx.clear().then(function() {
       return idx.size().then((sz) => assert.equal(0, sz));
     });
@@ -278,17 +278,29 @@ describe('Shatabang Index', () => {
 describe('Shatabang Object storage', () => {
   const OBJECT_INDEX_NAMESPACE = 'index_unit_test_objects';
   const objIndex = shIndex(OBJECT_INDEX_NAMESPACE, {indexType: 'object'});
-  var objs = [{a:1, b:2}, {c:3, d:4}, {e: 5, f: 6}];
+  var objs = [{a: 1, b: 2}, {c: 3, d: 4}, {e: 5, f: 6}];
+
+  it('should start empty', () => {
+    return objIndex.clear().then(function() {
+      return objIndex.size().then((sz) => assert.equal(0, sz));
+    });
+  });
 
   it('should be able to store objects', () => {
     var key = 123456789;
-    return Promise.all(objs.map(obj => objIndex.put('' + (key++), obj)));
+    return Promise.all(objs.map(async obj => {
+      let itm = await objIndex.get('' + key)
+      objIndex.put('' + (key++), obj);
+    }));
   });
 
   it('should be able to list objects', () => {
-    objIndex.keys().then((keys) => {
-      var promises = keys.map(key => objIndex.get(key));
-      return Promise.all(promises).then(values => assert.equal(3, values.length));
+    return objIndex.keys().then(async (keys) => {
+      var promises = keys.sort().map(key => objIndex.get(key));
+      let result = await Promise.all(promises);
+      assert.deepStrictEqual(objs[0], result[0])
+      assert.deepStrictEqual(objs[1], result[1])
+      assert.deepStrictEqual(objs[2], result[2])
     })
     .catch(assert.fail);
   });

@@ -84,18 +84,20 @@ module.exports = function(namespace, config) {
 
         if(_indexType === OBJECT_INDEX) {
           key = namespace + key;
-          redisClient.hmset(key, value, callbackHandler);
-        } else {
+          // redisClient.hmset(key, value, callbackHandler);
+          value = JSON.stringify(value);
+        } //else {
           if(!isString(value)) {
             return reject('Value must be a string when storing strings: ' + value);
           }
           let putStringValue = () => {
             key = namespace + key;
-            if(_indexType === STRING_INDEX) {
-              redisClient.set(key, value, callbackHandler);
-            } else if(_indexType === STRING_ARRAY_INDEX || _indexType === STRING_UNIQUE_ARRAY_INDEX) {
+            if(_indexType === STRING_ARRAY_INDEX || _indexType === STRING_UNIQUE_ARRAY_INDEX) {
               redisClient.lpush(key, value, callbackHandler);
-            }
+            } else {
+            // if(_indexType === STRING_INDEX) {
+              redisClient.set(key, value, callbackHandler);
+            }  
           };
 
           if(_indexType === STRING_UNIQUE_ARRAY_INDEX) {
@@ -110,7 +112,7 @@ module.exports = function(namespace, config) {
           } else {
             putStringValue();
           }
-        }
+        // }
       });
     },
 
@@ -127,7 +129,15 @@ module.exports = function(namespace, config) {
         var callback = callbackFactory(resolve, reject);
 
         if(_indexType === OBJECT_INDEX) {
-          redisClient.hgetall(key, callback);
+          // console.log('Get key', key)
+          redisClient.get(key, (err, res) => {
+            if (err) {
+              console.log('ERr', err)
+              return reject(err);
+            }
+            resolve(JSON.parse(res));
+          });
+          // redisClient.hgetall(key, callback);
         } else if(_indexType === STRING_INDEX) {
           redisClient.get(key, callback);
         } else if(_indexType === STRING_ARRAY_INDEX || _indexType === STRING_UNIQUE_ARRAY_INDEX) {

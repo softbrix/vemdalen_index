@@ -28,10 +28,10 @@
   },
   "homepage": "https://github.com/softbrix/vemdalen_index#readme",
   "dependencies": {
-    "redis": "2.8.0"
+    "redis": "3.0.2"
   },
   "devDependencies": {
-    "fakeredis": "2.0.0",
+    "redis-mock": "0.56.3",
     "mocha": "6.1.4"
   }
 }
