@@ -27,13 +27,6 @@ describe('Shatabang Mocked Index', () => {
 
     return Promise.all(tasks);
   });
-
-  xit('should handle quit', () => {
-    return idx.put('asb', 'the beste1')
-      .then(() => redisClient.quit())
-      .then(() => idx.get('asb'))
-      .then(assert.fail, assert.ok );
-  });
 });
 
 /** Enable this if you want to clear the entire redis database */
@@ -254,23 +247,24 @@ describe('Shatabang Index', () => {
   });
 
   describe('simultaneous read and write', () => {
-    const idx2 = shIndex(INDEX_NAMESPACE);
+    const idx = shIndex(INDEX_NAMESPACE + '_sim',{ indexType: 'string' });
+    const idx2 = shIndex(INDEX_NAMESPACE + '_sim', { indexType: 'string' });
 
     it('should be able to sync data between instances in same process', () => {
       const KEY = 'Netflix';
       const VALUE = 'The Crown';
       // Precond
       return idx.get(KEY)
-      .then(res => assert.deepEqual([], res))
+      .then(res => assert.notStrictEqual(undefined, res))
       .then(() => idx2.get(KEY))
-      .then(res => assert.deepEqual([], res))
+      .then(res => assert.notStrictEqual(undefined, res))
       // Change
       .then(() => idx.update(KEY, VALUE))
       // Post cond
       .then(() => idx.get(KEY))
-      .then(res => assert.deepEqual([VALUE], res))
+      .then(res => assert.deepStrictEqual(VALUE, res))
       .then(() => idx2.get(KEY))
-      .then(res => assert.deepEqual([VALUE], res));
+      .then(res => assert.deepStrictEqual(VALUE, res));
     });
   });
 });
@@ -279,6 +273,7 @@ describe('Shatabang Object storage', () => {
   const OBJECT_INDEX_NAMESPACE = 'index_unit_test_objects';
   const objIndex = shIndex(OBJECT_INDEX_NAMESPACE, {indexType: 'object'});
   var objs = [{a: 1, b: 2}, {c: 3, d: 4}, {e: 5, f: 6}];
+  var key = 123456789;
 
   it('should start empty', () => {
     return objIndex.clear().then(function() {
@@ -287,20 +282,26 @@ describe('Shatabang Object storage', () => {
   });
 
   it('should be able to store objects', () => {
-    var key = 123456789;
     return Promise.all(objs.map(async obj => {
       let itm = await objIndex.get('' + key)
-      objIndex.put('' + (key++), obj);
+      objIndex.put('' + (++key), obj);
     }));
+  });
+
+  it('should be able to delete objects', async () => {
+    let s = await objIndex.size();
+    await objIndex.delete('' + (key ));
+    let s2 = await objIndex.size();
+    assert.strictEqual(s2, s - 1)
   });
 
   it('should be able to list objects', () => {
     return objIndex.keys().then(async (keys) => {
       var promises = keys.sort().map(key => objIndex.get(key));
       let result = await Promise.all(promises);
+      assert.strictEqual(result.length, 2);
       assert.deepStrictEqual(objs[0], result[0])
       assert.deepStrictEqual(objs[1], result[1])
-      assert.deepStrictEqual(objs[2], result[2])
     })
     .catch(assert.fail);
   });

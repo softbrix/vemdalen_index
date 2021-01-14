@@ -6,11 +6,12 @@ The index redis module stores all information to the redis instance.
 */
 
 var redis = require("redis");
+const { promisify } = require("util");
 
-const STRING_INDEX = 0;
-const STRING_ARRAY_INDEX = 1;
-const STRING_UNIQUE_ARRAY_INDEX = 2;
-const OBJECT_INDEX = 3;
+const STRING_INDEX = 1;
+const STRING_ARRAY_INDEX = 2;
+const STRING_UNIQUE_ARRAY_INDEX = 3;
+const OBJECT_INDEX = 4;
 
 function getIndexType(typeString) {
   if(typeString === undefined || typeString === 'strings') {
@@ -44,15 +45,12 @@ module.exports = function(namespace, config) {
     redisClient = redis.createClient(config);
   }
 
-  function callbackFactory(resolve, reject) {
-    return function(err, res) {
-      if(err) {
-        reject(err);
-      } else {
-        resolve(res);
-      }
-    };
-  }
+  const delAsync = promisify(redisClient.del).bind(redisClient);
+  const getAsync = promisify(redisClient.get).bind(redisClient);
+  const keysAsync = promisify(redisClient.keys).bind(redisClient);
+  const lpushAsync = promisify(redisClient.lpush).bind(redisClient);
+  const lrangeAsync = promisify(redisClient.lrange).bind(redisClient);
+  const setAsync = promisify(redisClient.set).bind(redisClient);
 
   return {
     /**
@@ -70,86 +68,59 @@ module.exports = function(namespace, config) {
     Expects a key string and defined value as parameters. These will be added to
     the internal index
     */
-    put : function(key, value) {
+    put : async function(key, value) {
       if(!isString(key) || key.length === 0) {
         return Promise.reject('Key must be an non empty string: ' + key);
       }
       if(value === undefined) {
         return Promise.reject('Value must not be undefined: ' + value);
       }
-      let that = this;
+      
+      if(_indexType === OBJECT_INDEX) {
+        value = JSON.stringify(value);
+      } 
+      if(!isString(value)) {
+        return reject('Value must be a string when storing strings: ' + value);
+      }
 
-      return new Promise(function(resolve, reject) {
-        var callbackHandler = callbackFactory(resolve, reject);
+      if(_indexType === STRING_UNIQUE_ARRAY_INDEX) {
+        // We need to check if the value already exists
+        let values = await this.get(key)
+        if(values.indexOf(value) >= 0) {
+          return;
+        }
+      } 
+       
+      key = namespace + key;
 
-        if(_indexType === OBJECT_INDEX) {
-          key = namespace + key;
-          // redisClient.hmset(key, value, callbackHandler);
-          value = JSON.stringify(value);
-        } //else {
-          if(!isString(value)) {
-            return reject('Value must be a string when storing strings: ' + value);
-          }
-          let putStringValue = () => {
-            key = namespace + key;
-            if(_indexType === STRING_ARRAY_INDEX || _indexType === STRING_UNIQUE_ARRAY_INDEX) {
-              redisClient.lpush(key, value, callbackHandler);
-            } else {
-            // if(_indexType === STRING_INDEX) {
-              redisClient.set(key, value, callbackHandler);
-            }  
-          };
-
-          if(_indexType === STRING_UNIQUE_ARRAY_INDEX) {
-            // We need to check if the value already exists
-            that.get(key).then(values => {
-              if(values.indexOf(value) < 0) {
-                return putStringValue();
-              } else {
-                callbackHandler();
-              }
-            }, reject);
-          } else {
-            putStringValue();
-          }
-        // }
-      });
+      if(_indexType === STRING_ARRAY_INDEX || _indexType === STRING_UNIQUE_ARRAY_INDEX) {
+        return lpushAsync(key, value);
+      }
+      return setAsync(key, value);
     },
 
     /**
      Return all items for the matching key
      */
-    get : function(key) {
+    get : async function(key) {
       if(!isString(key) || key.length === 0) {
         return Promise.reject("Key must be an non empty string: " + key);
       }
       key = namespace + key;
 
-      return new Promise(function(resolve, reject) {
-        var callback = callbackFactory(resolve, reject);
-
-        if(_indexType === OBJECT_INDEX) {
-          // console.log('Get key', key)
-          redisClient.get(key, (err, res) => {
-            if (err) {
-              console.log('ERr', err)
-              return reject(err);
-            }
-            resolve(JSON.parse(res));
-          });
-          // redisClient.hgetall(key, callback);
-        } else if(_indexType === STRING_INDEX) {
-          redisClient.get(key, callback);
-        } else if(_indexType === STRING_ARRAY_INDEX || _indexType === STRING_UNIQUE_ARRAY_INDEX) {
-          redisClient.lrange(key, 0, -1, function(err, res) {
-            // Prevent returning null, empty array means the same
-            if(res === null) {
-              res = [];
-            }
-            callback(err, res);
-          });
+      let res;
+      if(_indexType === OBJECT_INDEX) {
+        res = JSON.parse(await getAsync(key));
+      } else if(_indexType === STRING_INDEX) {
+        res = await getAsync(key);
+      } else if(_indexType === STRING_ARRAY_INDEX || _indexType === STRING_UNIQUE_ARRAY_INDEX) {
+        res = lrangeAsync(key, 0, -1);
+        // Prevent returning null, empty array means the same
+        if(res === null) {
+          res = [];
         }
-      });
+      }
+      return res;
     },
 
     /* Delete a key */
@@ -157,22 +128,13 @@ module.exports = function(namespace, config) {
       if(!isString(key) || key.length === 0) {
         return Promise.reject("Key must be an non empty string: " + key);
       }
-      key = namespace + key;
-
-      return new Promise(function(resolve, reject) {
-        var callbackHandler = callbackFactory(resolve, reject);
-        if(_indexType === OBJECT_INDEX) {
-          redisClient.hdel(key, callbackHandler);
-        } else {
-          redisClient.del(key, callbackHandler);
-        }
-      });
+      return delAsync(namespace + key);
     },
 
     /** Update a key is remove then put */
     update : function(key, value) {
       let putFunc = this.put;
-      return this.delete(key).then(function() {
+      return this.delete(key).then(() => {
         return putFunc(key, value);
       });
     },
@@ -182,23 +144,16 @@ module.exports = function(namespace, config) {
     Only a list of keys is returned which then can be used to lookup the values.
     **/
     search : function(searchStr) {
-      return new Promise(function(resolve, reject) {
-        var callbackHandler = callbackFactory(resolve, reject);
-
-        redisClient.keys(namespace + searchStr + '*', callbackHandler);
-      });
+      return keysAsync(namespace + searchStr + '*');
     },
 
     /**
     The list of stored keys
     */
     keys : function() {
-      return new Promise(function(resolve, reject) {
-        var callbackHandler = callbackFactory(resolve, reject);
-        redisClient.keys(namespace + '*', callbackHandler);
-      })
-      // Remove namespace from the returned keys
-      .then(keys => keys.map(key => key.substring(namespace.length)));
+      return keysAsync(namespace + '*')
+        // Remove namespace from the returned keys
+        .then(keys => keys.map(key => key.substring(namespace.length)));
     },
 
     /** Return the number of keys in the index */
