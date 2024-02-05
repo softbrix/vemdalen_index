@@ -28,7 +28,7 @@
   },
   "homepage": "https://github.com/softbrix/vemdalen_index#readme",
   "dependencies": {
-    "redis": "3.1.2"
+    "redis": "4.6.13"
   },
   "devDependencies": {
     "redis-mock": "0.56.3",
